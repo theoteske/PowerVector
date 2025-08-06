@@ -25,12 +25,12 @@ class dynamicArray
         dynamicArray<T>& operator=(dynamicArray<T>&&) noexcept;
         T& operator[](size_t);
         const T& operator[](size_t) const;
-        T* begin();
-        T* end();
-        const T* begin() const;
-        const T* end() const;
-        size_t length() const;
-        size_t capacity() const;
+        T* begin() noexcept;
+        const T* begin() const noexcept;
+        T* end() noexcept;
+        const T* end() const noexcept;
+        size_t length() const noexcept;
+        size_t capacity() const noexcept;
         T* data() noexcept;
         const T* data() const noexcept;
         void append(const T&);
@@ -39,9 +39,10 @@ class dynamicArray
         void concatenate(const dynamicArray<T>&);
         T& at(size_t n);
         const T& at(size_t n) const;
-        bool empty() const;
-        void clear();
+        bool empty() const noexcept;
+        void clear() noexcept;
         void reserve(size_t);
+        void resize(size_t, const T& = T{});
 };
 
 #include "dynamicArray.tpp"

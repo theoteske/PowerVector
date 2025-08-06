@@ -10,7 +10,7 @@ template<typename T>
 size_t dynamicArray<T>::nextPowerOf2(size_t n)
 {
     if (n <= 1) return 1;
-    n--;
+    --n;
     n |= n >> 1;
     n |= n >> 2;
     n |= n >> 4;
@@ -109,22 +109,22 @@ template<typename T>
 const T& dynamicArray<T>::operator[](size_t idx) const { return arr[idx]; }
 
 template<typename T>
-T* dynamicArray<T>::begin() { return arr; }
+T* dynamicArray<T>::begin() noexcept { return arr; }
 
 template<typename T>
-const T* dynamicArray<T>::begin() const { return arr; }
+const T* dynamicArray<T>::begin() const noexcept { return arr; }
 
 template<typename T>
-T* dynamicArray<T>::end() { return arr + len; }
+T* dynamicArray<T>::end() noexcept { return arr + len; }
 
 template<typename T>
-const T* dynamicArray<T>::end() const { return arr + len; }
+const T* dynamicArray<T>::end() const noexcept { return arr + len; }
 
 template<typename T>
-size_t dynamicArray<T>::length() const { return len; }
+size_t dynamicArray<T>::length() const noexcept { return len; }
 
 template<typename T>
-size_t dynamicArray<T>::capacity() const { return cap; }
+size_t dynamicArray<T>::capacity() const noexcept { return cap; }
 
 template<typename T>
 T* dynamicArray<T>::data() noexcept { return arr; }
@@ -137,7 +137,7 @@ void dynamicArray<T>::append(const T& item)
 {
     if (len >= cap) reallocate(true);
     arr[len] = item;
-    len++;
+    ++len;
 }
 
 template<typename T>
@@ -145,13 +145,13 @@ void dynamicArray<T>::append(T&& item)
 {
     if (len >= cap) reallocate(true);
     arr[len] = std::move(item);
-    len++;
+    ++len;
 }
 
 template<typename T>
 void dynamicArray<T>::pop_back()
 {
-    if (len > 0) len--; // no bounds checking for performance
+    if (len > 0) --len; // no bounds checking for performance
 }
 
 template<typename T>
@@ -182,13 +182,13 @@ T& dynamicArray<T>::at(size_t idx)
 }
 
 template<typename T>
-bool dynamicArray<T>::empty() const
+bool dynamicArray<T>::empty() const noexcept
 {
     return (len == 0);
 }
 
 template<typename T>
-void dynamicArray<T>::clear() { len = 0; }
+void dynamicArray<T>::clear() noexcept { len = 0; }
 
 template<typename T>
 void dynamicArray<T>::reserve(size_t newCap)
@@ -201,6 +201,15 @@ void dynamicArray<T>::reserve(size_t newCap)
         delete[] arr;
         arr = nA;
     }
+}
+
+template<typename T>
+void dynamicArray<T>::resize(size_t newLen, const T& value)
+{
+    if (newLen > cap) reserve(newLen);
+
+    if (newLen > len) std::fill(arr + len, arr + newLen, value);
+    len = newLen;
 }
 
 #endif
