@@ -31,6 +31,8 @@ class dynamicArray
         const T* end() const;
         size_t length() const;
         size_t capacity() const;
+        T* data() noexcept;
+        const T* data() const noexcept;
         void append(const T&);
         void append(T&&);
         void pop_back();

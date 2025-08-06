@@ -127,6 +127,12 @@ template<typename T>
 size_t dynamicArray<T>::capacity() const { return cap; }
 
 template<typename T>
+T* dynamicArray<T>::data() noexcept { return arr; }
+
+template<typename T>
+const T* dynamicArray<T>::data() const noexcept { return arr; }
+
+template<typename T>
 void dynamicArray<T>::append(const T& item)
 {
     if (len >= cap) reallocate(true);
