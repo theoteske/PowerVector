@@ -16,7 +16,7 @@ size_t dynamicArray<T>::nextPowerOf2(size_t n)
     n |= n >> 4;
     n |= n >> 8;
     n |= n >> 16;
-    n |= n >> 32;
+    if constexpr (sizeof(size_t) > 4) n |= n >> 32; // compile-time check to avoid undefined behavior on 32-bit systems
     return n+1;
 }
 
