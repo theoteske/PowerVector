@@ -191,7 +191,7 @@ void dynamicArray<T>::reserve(size_t newCap)
     {
         cap = nextPowerOf2(newCap);
         T* nA = new T[cap];
-        std::copy(arr, len, nA);
+        std::copy_n(arr, len, nA);
         delete[] arr;
         arr = nA;
     }
