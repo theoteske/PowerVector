@@ -226,4 +226,13 @@ void dynamicArray<T>::shrink_to_fit()
     }
 }
 
+template <typename T>
+template <typename... Args>
+void dynamicArray<T>::emplace_back(Args... args)
+{
+    if (len >= cap) reallocate(true);
+    new (&arr[len]) T(std::forward<Args>(args)...);
+    ++len;
+}
+
 #endif
