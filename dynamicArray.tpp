@@ -212,4 +212,18 @@ void dynamicArray<T>::resize(size_t newLen, const T& value)
     len = newLen;
 }
 
+template <typename T>
+void dynamicArray<T>::shrink_to_fit()
+{
+    size_t newCap = nextPowerOf2(len);
+    if (newCap < cap) // shrink if we can reduce capacity
+    {
+        T* nA = new T[newCap];
+        std::copy_n(arr, len, nA);
+        delete[] arr;
+        arr = nA;
+        cap = newCap;
+    }
+}
+
 #endif

@@ -43,6 +43,7 @@ class dynamicArray
         void clear() noexcept;
         void reserve(size_t);
         void resize(size_t, const T& = T{});
+        void shrink_to_fit();
 };
 
 #include "dynamicArray.tpp"
