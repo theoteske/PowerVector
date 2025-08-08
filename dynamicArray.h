@@ -45,7 +45,7 @@ class dynamicArray
         void resize(size_t, const T& = T{});
         void shrink_to_fit();
         template<typename... Args>
-        void emplace_back(Args...);
+        void emplace_back(Args&&...);
 };
 
 #include "dynamicArray.tpp"

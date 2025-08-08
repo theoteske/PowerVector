@@ -5,7 +5,7 @@ Include in your `main.cpp` file using the following preprocessor directive:
 #include "dynamicArray.h"
 ```
 
-Compile using C++17 or later for `constexpr`:
+Compile using C++17 or later:
 ```bash
 g++ -std=c++17 -o main main.cpp
 ```
