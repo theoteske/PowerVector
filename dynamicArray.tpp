@@ -24,7 +24,7 @@ size_t dynamicArray<T>::nextPowerOf2(size_t n)
 template<typename T>
 void dynamicArray<T>::reallocate(bool doubleCap)
 {
-    const size_t newCap = doubleCap ? cap * 2 : nextPowerOf2(len); // for append could just be cap *= 2, for concatenate need more
+    const size_t newCap = doubleCap ? (cap ? cap * 2 : 1) : nextPowerOf2(len); // for append could just be cap *= 2, for concatenate need more
     T* newArr = static_cast<T*>(::operator new(newCap * sizeof(T)));
 
     // compile-time check to avoid try-catch block if T has a noexcept move constructor
@@ -263,10 +263,10 @@ template<typename T>
 const T* dynamicArray<T>::begin() const noexcept { return arr; }
 
 template<typename T>
-T* dynamicArray<T>::end() noexcept { return arr + len; }
+T* dynamicArray<T>::end() noexcept { return (arr ? arr + len : nullptr); }
 
 template<typename T>
-const T* dynamicArray<T>::end() const noexcept { return arr + len; }
+const T* dynamicArray<T>::end() const noexcept { return (arr ? arr + len : nullptr); }
 
 template<typename T>
 size_t dynamicArray<T>::length() const noexcept { return len; }
