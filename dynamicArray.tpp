@@ -3,9 +3,12 @@
 
 #include <stddef.h>    // size_t
 #include <stdexcept>   // std::out_of_range
-#include <utility>     // std::exchange, std::forward
+#include <utility>     // std::exchange, std::forward, std::swap
 #include <type_traits> // std::is_nothrow_move_constructible_v, std::is_nothrow_copy_constructible_v, std::is_trivially_destructible_v
 #include <new>         // ::operator new, ::operator delete
+#include <iterator>    // std::reverse_iterator
+#include <cstring>     // std::memcpy, std::memmove
+#include <algorithm>   // std::min
 
 template<typename T>
 size_t dynamicArray<T>::nextPowerOf2(size_t n)
@@ -28,7 +31,11 @@ void dynamicArray<T>::reallocate(bool doubleCap)
     T* newArr = static_cast<T*>(::operator new(newCap * sizeof(T)));
 
     // compile-time check to avoid try-catch block if T has a noexcept move constructor
-    if constexpr (std::is_nothrow_move_constructible_v<T>)
+    if constexpr (std::is_trivially_copyable_v<T>) 
+    {
+        std::memcpy(newArr, arr, len * sizeof(T));
+    }
+    else if constexpr (std::is_nothrow_move_constructible_v<T>)
     {
         for (size_t i = 0; i < len; ++i)
             new (&newArr[i]) T(std::move(arr[i]));
@@ -74,7 +81,20 @@ template<typename T>
 dynamicArray<T>::dynamicArray(size_t count, const T& value)
     : len(count), cap(nextPowerOf2(count)), arr(static_cast<T*>(::operator new(cap * sizeof(T))))
 {
-    if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile-time check if T has a noexcept copy constructor
+    if constexpr (std::is_trivially_copyable_v<T>)
+    {
+        if (len > 0) {
+            // write one, then replicate exponentially
+            std::memcpy(arr, &value, sizeof(T));
+            size_t filled = 1;
+            while (filled < len) {
+                const size_t chunk = std::min(filled, len - filled);
+                std::memcpy(arr + filled, arr, chunk * sizeof(T));
+                filled += chunk;
+            }
+        }
+    }
+    else if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile-time check if T has a noexcept copy constructor
     {
         for (size_t i = 0; i < len; ++i)
             new (&arr[i]) T(value);
@@ -106,7 +126,11 @@ template<size_t N>
 dynamicArray<T>::dynamicArray(T (&a)[N])
     : len(N), cap(nextPowerOf2(N)), arr(static_cast<T*>(::operator new(cap * sizeof(T))))
 {
-    if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile time check if T has a noexcept copy constructor
+    if constexpr (std::is_trivially_copyable_v<T>)
+    {
+        std::memcpy(arr, a, len * sizeof(T));
+    }
+    else if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile time check if T has a noexcept copy constructor
     {
         for (size_t i = 0; i < len; ++i)
             new (&arr[i]) T(a[i]);
@@ -149,7 +173,11 @@ template<typename T>
 dynamicArray<T>::dynamicArray(const dynamicArray<T>& other) // copy constructor
     : len(other.len), cap(other.cap), arr(static_cast<T*>(::operator new(other.cap * sizeof(T))))
 {
-    if constexpr (std::is_nothrow_copy_constructible_v<T>)
+    if constexpr (std::is_trivially_copyable_v<T>)
+    {
+        std::memcpy(arr, other.arr, len * sizeof(T));
+    }
+    else if constexpr (std::is_nothrow_copy_constructible_v<T>)
     {
         for (size_t i = 0; i < len; ++i)
             new (&arr[i]) T(other.arr[i]);
@@ -189,43 +217,90 @@ dynamicArray<T>& dynamicArray<T>::operator=(const dynamicArray<T>& other)
 {
     if (this != &other)
     {
-        T* newArr = static_cast<T*>(::operator new(other.cap * sizeof(T))); // for exception safety
-        if constexpr (std::is_nothrow_copy_constructible_v<T>)
+        if (other.len <= cap)
         {
-            for (size_t i = 0; i < other.len; ++i)
-                new (&newArr[i]) T(other.arr[i]);
-        }
-        else
-        {
-            size_t i = 0;
-            try
+            if constexpr (std::is_trivially_copyable_v<T>)
             {
-                for (; i < other.len; ++i)
+                std::memcpy(arr, other.arr, other.len * sizeof(T));
+            }
+            else
+            {
+                size_t i = 0;
+                for (; i < std::min(len, other.len); ++i)
+                    arr[i] = other.arr[i];
+                
+                if constexpr (std::is_nothrow_copy_constructible_v<T>)
+                {
+                    for (; i < other.len; ++i)
+                        new (&arr[i]) T(other.arr[i]);
+                }
+                else
+                {
+                    try
+                    {
+                        for (; i < other.len; ++i)
+                            new (&arr[i]) T(other.arr[i]);
+                    }
+                    catch (...)
+                    {
+                        if constexpr (!std::is_trivially_destructible_v<T>)
+                        {
+                            for (size_t i = 0; i < len; ++i)
+                                arr[i].~T();
+                        }
+
+                        ::operator delete(arr);
+                        throw;
+                    }
+                }
+            }
+
+            len = other.len;
+        }
+        else 
+        {
+            T* newArr = static_cast<T*>(::operator new(other.cap * sizeof(T))); // for exception safety
+            if constexpr (std::is_trivially_copyable_v<T>)
+            {
+                std::memcpy(newArr, other.arr, other.len * sizeof(T));
+            }
+            else if constexpr (std::is_nothrow_copy_constructible_v<T>)
+            {
+                for (size_t i = 0; i < other.len; ++i)
                     new (&newArr[i]) T(other.arr[i]);
             }
-            catch (...)
+            else
             {
-                if constexpr (!std::is_trivially_destructible_v<T>)
+                size_t i = 0;
+                try
                 {
-                    for (size_t j = 0; j < i; ++j)
-                        newArr[j].~T();
+                    for (; i < other.len; ++i)
+                        new (&newArr[i]) T(other.arr[i]);
                 }
+                catch (...)
+                {
+                    if constexpr (!std::is_trivially_destructible_v<T>)
+                    {
+                        for (size_t j = 0; j < i; ++j)
+                            newArr[j].~T();
+                    }
 
-                ::operator delete(newArr);
-                throw;
+                    ::operator delete(newArr);
+                    throw;
+                }
             }
-        }
-        
-        if constexpr (!std::is_trivially_destructible_v<T>)
-        {
-            for (size_t i = 0; i < len; i++)
-                arr[i].~T();
-        }
+            
+            if constexpr (!std::is_trivially_destructible_v<T>)
+            {
+                for (size_t i = 0; i < len; i++)
+                    arr[i].~T();
+            }
 
-        ::operator delete(arr);
-        arr = newArr;
-        len = other.len;
-        cap = other.cap;
+            ::operator delete(arr);
+            arr = newArr;
+            len = other.len;
+            cap = other.cap;
+        }
     }
     return *this;
 }
@@ -267,6 +342,18 @@ T* dynamicArray<T>::end() noexcept { return (arr ? arr + len : nullptr); }
 
 template<typename T>
 const T* dynamicArray<T>::end() const noexcept { return (arr ? arr + len : nullptr); }
+
+template<typename T>
+std::reverse_iterator<T*> dynamicArray<T>::rbegin() noexcept { return std::reverse_iterator<T*>(end()); }
+
+template<typename T>
+std::reverse_iterator<const T*> dynamicArray<T>::rbegin() const noexcept { return std::reverse_iterator<const T*>(end()); }
+
+template<typename T>
+std::reverse_iterator<T*> dynamicArray<T>::rend() noexcept { return std::reverse_iterator<T*>(begin()); }
+
+template<typename T>
+std::reverse_iterator<const T*> dynamicArray<T>::rend() const noexcept { return std::reverse_iterator<const T*>(begin()); }
 
 template<typename T>
 size_t dynamicArray<T>::length() const noexcept { return len; }
@@ -319,55 +406,63 @@ void dynamicArray<T>::concatenate(const dynamicArray<T>& other)
     {
         const size_t newCap = nextPowerOf2(newLen);
         T* newArr = static_cast<T*>(::operator new(newCap * sizeof(T)));
-        if constexpr (std::is_nothrow_move_constructible_v<T>)
+        if constexpr (std::is_trivially_copyable_v<T>)
         {
-            for (size_t i = 0; i < len; ++i)
-                new (&newArr[i]) T(std::move(arr[i]));
+            std::memcpy(newArr, arr, len * sizeof(T));
+            std::memcpy(newArr + len, other.arr, other.len * sizeof(T));
         }
-        else
+        else 
         {
-            size_t i = 0;
-            try
+            if constexpr (std::is_nothrow_move_constructible_v<T>)
             {
-                for (; i < len; ++i)
+                for (size_t i = 0; i < len; ++i)
                     new (&newArr[i]) T(std::move(arr[i]));
             }
-            catch (...)
+            else
             {
-                if constexpr (!std::is_trivially_destructible_v<T>)
+                size_t i = 0;
+                try
                 {
-                    for (size_t j = 0; j < i; ++j)
-                        newArr[j].~T();
+                    for (; i < len; ++i)
+                        new (&newArr[i]) T(std::move(arr[i]));
                 }
+                catch (...)
+                {
+                    if constexpr (!std::is_trivially_destructible_v<T>)
+                    {
+                        for (size_t j = 0; j < i; ++j)
+                            newArr[j].~T();
+                    }
 
-                ::operator delete(newArr);
-                throw;
+                    ::operator delete(newArr);
+                    throw;
+                }
             }
-        }
-
-        if constexpr (std::is_nothrow_copy_constructible_v<T>)
-        {
-            for (size_t i = len; i < newLen; ++i)
-                new (&newArr[i]) T(other.arr[i-len]);
-        }
-        else
-        {
-            size_t i = len;
-            try
+            
+            if constexpr (std::is_nothrow_copy_constructible_v<T>)
             {
-                for (; i < newLen; ++i)
+                for (size_t i = len; i < newLen; ++i)
                     new (&newArr[i]) T(other.arr[i-len]);
             }
-            catch (...)
+            else
             {
-                if constexpr (!std::is_trivially_destructible_v<T>)
+                size_t i = len;
+                try
                 {
-                    for (size_t j = 0; j < i; ++j)
-                        newArr[j].~T();
+                    for (; i < newLen; ++i)
+                        new (&newArr[i]) T(other.arr[i-len]);
                 }
+                catch (...)
+                {
+                    if constexpr (!std::is_trivially_destructible_v<T>)
+                    {
+                        for (size_t j = 0; j < i; ++j)
+                            newArr[j].~T();
+                    }
 
-                ::operator delete(newArr);
-                throw;
+                    ::operator delete(newArr);
+                    throw;
+                }
             }
         }
         
@@ -385,7 +480,11 @@ void dynamicArray<T>::concatenate(const dynamicArray<T>& other)
     }
     else
     {
-        if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile-time check if T has a noexcept copy constructor
+        if constexpr (std::is_trivially_copyable_v<T>)
+        {
+            std::memmove(arr + len, other.arr, other.len * sizeof(T));
+        }
+        else if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile-time check if T has a noexcept copy constructor
         {
             for (size_t i = len; i < newLen; ++i)
                 new (&arr[i]) T(other.arr[i-len]);
@@ -447,6 +546,13 @@ void dynamicArray<T>::clear() noexcept
 }
 
 template<typename T>
+void dynamicArray<T>::swap(dynamicArray<T>& other) noexcept {
+    std::swap(arr, other.arr);
+    std::swap(len, other.len);
+    std::swap(cap, other.cap);
+}
+
+template<typename T>
 void dynamicArray<T>::reserve(size_t space)
 {
     if (space > cap)
@@ -454,7 +560,11 @@ void dynamicArray<T>::reserve(size_t space)
         const size_t newCap = nextPowerOf2(space);
         T* newArr = static_cast<T*>(::operator new(newCap * sizeof(T)));
         
-        if constexpr (std::is_nothrow_move_constructible_v<T>)
+        if constexpr (std::is_trivially_copyable_v<T>)
+        {
+            std::memcpy(newArr, arr, len * sizeof(T));
+        }
+        else if constexpr (std::is_nothrow_move_constructible_v<T>)
         {
             for (size_t i = 0; i < len; ++i)
                 new (&newArr[i]) T(std::move(arr[i]));
@@ -502,7 +612,22 @@ void dynamicArray<T>::resize(size_t newLen, const T& value)
         {
             const size_t newCap = nextPowerOf2(newLen);
             T* newArr = static_cast<T*>(::operator new(newCap * sizeof(T)));
-            if constexpr (std::is_nothrow_move_constructible_v<T>)
+
+            if constexpr (std::is_trivially_copyable_v<T>) {
+                std::memcpy(newArr, arr, len * sizeof(T));
+                const size_t grow = newLen - len;
+                if (grow > 0) {
+                    // write one, then replicate exponentially
+                    std::memcpy(newArr + len, &value, sizeof(T));
+                    size_t filled = 1;
+                    while (filled < grow) {
+                        const size_t chunk = std::min(filled, grow - filled);
+                        std::memcpy(newArr + len + filled, newArr + len, chunk * sizeof(T));
+                        filled += chunk;
+                    }
+                }
+            }
+            else if constexpr (std::is_nothrow_move_constructible_v<T>)
             {
                 for (size_t i = 0; i < len; ++i)
                     new (&newArr[i]) T(std::move(arr[i]));
@@ -567,7 +692,19 @@ void dynamicArray<T>::resize(size_t newLen, const T& value)
         }
         else
         {
-            if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile-time check if T has a noexcept copy constructor
+            if constexpr (std::is_trivially_copyable_v<T>) {
+                const size_t grow = newLen - len;
+                if (grow > 0) {
+                    std::memcpy(arr + len, &value, sizeof(T));
+                    size_t filled = 1;
+                    while (filled < grow) {
+                        const size_t chunk = std::min(filled, grow - filled);
+                        std::memcpy(arr + len + filled, arr + len, chunk * sizeof(T));
+                        filled += chunk;
+                    }
+                }
+            } 
+            else if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile-time check if T has a noexcept copy constructor
             {
                 for (size_t i = len; i < newLen; ++i)
                     new (&arr[i]) T(value);

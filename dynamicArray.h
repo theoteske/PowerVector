@@ -2,6 +2,7 @@
 #define DYNAMIC_ARRAY_H
 
 #include <stddef.h> // size_t
+#include <iterator> // std::reverse_iterator
 
 template<typename T>
 class dynamicArray
@@ -29,6 +30,10 @@ class dynamicArray
         const T* begin() const noexcept;
         T* end() noexcept;
         const T* end() const noexcept;
+        std::reverse_iterator<T*> rbegin() noexcept;
+        std::reverse_iterator<const T*> rbegin() const noexcept;
+        std::reverse_iterator<T*> rend() noexcept;
+        std::reverse_iterator<const T*> rend() const noexcept;
         size_t length() const noexcept;
         size_t capacity() const noexcept;
         T* data() noexcept;
@@ -41,6 +46,7 @@ class dynamicArray
         const T& at(size_t n) const;
         bool empty() const noexcept;
         void clear() noexcept;
+        void swap(dynamicArray<T>& other) noexcept;
         void reserve(size_t);
         void resize(size_t, const T& = T{});
         void shrink_to_fit();
