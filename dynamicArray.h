@@ -24,8 +24,8 @@ class dynamicArray
         dynamicArray(dynamicArray<T>&&) noexcept;
         dynamicArray<T>& operator=(const dynamicArray<T>&);
         dynamicArray<T>& operator=(dynamicArray<T>&&) noexcept;
-        T& operator[](size_t);
-        const T& operator[](size_t) const;
+        T& operator[](size_t) noexcept;
+        const T& operator[](size_t) const noexcept;
         T* begin() noexcept;
         const T* begin() const noexcept;
         T* end() noexcept;

@@ -326,10 +326,10 @@ dynamicArray<T>& dynamicArray<T>::operator=(dynamicArray<T>&& other) noexcept //
 }
 
 template<typename T>
-T& dynamicArray<T>::operator[](size_t idx) { return arr[idx]; } // no bounds checking for performance
+T& dynamicArray<T>::operator[](size_t idx) noexcept { return arr[idx]; } // no bounds checking for performance
 
 template<typename T>
-const T& dynamicArray<T>::operator[](size_t idx) const { return arr[idx]; }
+const T& dynamicArray<T>::operator[](size_t idx) const noexcept { return arr[idx]; }
 
 template<typename T>
 T* dynamicArray<T>::begin() noexcept { return arr; }
