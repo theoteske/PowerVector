@@ -25,6 +25,20 @@ size_t dynamicArray<T>::nextPowerOf2(size_t n)
 }
 
 template<typename T>
+void dynamicArray<T>::fillTrivial(T* dest, size_t count, const T& value) {
+    if (count == 0) return;
+
+    std::memcpy(dest, &value, sizeof(T));
+    size_t filled = 1;
+    while (filled < count) {
+        const size_t chunk = std::min(filled, count - filled);
+        std::memcpy(dest + filled, dest, chunk * sizeof(T));
+        filled += chunk;
+    }
+}
+
+
+template<typename T>
 void dynamicArray<T>::reallocate(bool doubleCap)
 {
     const size_t newCap = doubleCap ? (cap ? cap * 2 : 1) : nextPowerOf2(len); // for append could just be cap *= 2, for concatenate need more
@@ -83,16 +97,7 @@ dynamicArray<T>::dynamicArray(size_t count, const T& value)
 {
     if constexpr (std::is_trivially_copyable_v<T>)
     {
-        if (len > 0) {
-            // write one, then replicate exponentially
-            std::memcpy(arr, &value, sizeof(T));
-            size_t filled = 1;
-            while (filled < len) {
-                const size_t chunk = std::min(filled, len - filled);
-                std::memcpy(arr + filled, arr, chunk * sizeof(T));
-                filled += chunk;
-            }
-        }
+        fillTrivial(arr, len, value);
     }
     else if constexpr (std::is_nothrow_copy_constructible_v<T>) // compile-time check if T has a noexcept copy constructor
     {
@@ -529,6 +534,18 @@ T& dynamicArray<T>::at(size_t idx)
 }
 
 template<typename T>
+T& dynamicArray<T>::front() noexcept { return arr[0]; }
+
+template<typename T>
+const T& dynamicArray<T>::front() const noexcept { return arr[0]; }
+
+template<typename T>
+T& dynamicArray<T>::back() noexcept { return arr[len - 1]; }
+
+template<typename T>
+const T& dynamicArray<T>::back() const noexcept { return arr[len - 1]; }
+
+template<typename T>
 bool dynamicArray<T>::empty() const noexcept
 {
     return (len == 0);
@@ -614,18 +631,7 @@ void dynamicArray<T>::resize(size_t newLen, const T& value)
             T* newArr = static_cast<T*>(::operator new(newCap * sizeof(T)));
 
             if constexpr (std::is_trivially_copyable_v<T>) {
-                std::memcpy(newArr, arr, len * sizeof(T));
-                const size_t grow = newLen - len;
-                if (grow > 0) {
-                    // write one, then replicate exponentially
-                    std::memcpy(newArr + len, &value, sizeof(T));
-                    size_t filled = 1;
-                    while (filled < grow) {
-                        const size_t chunk = std::min(filled, grow - filled);
-                        std::memcpy(newArr + len + filled, newArr + len, chunk * sizeof(T));
-                        filled += chunk;
-                    }
-                }
+                fillTrivial(newArr + len, newLen - len, value);
             }
             else if constexpr (std::is_nothrow_move_constructible_v<T>)
             {
