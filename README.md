@@ -7,5 +7,5 @@ Include in your `main.cpp` file using the following preprocessor directive:
 
 Compile using C++17 or later:
 ```bash
-g++ -std=c++17 -o main main.cpp
+g++ -std=c++17 main.cpp -o main
 ```
