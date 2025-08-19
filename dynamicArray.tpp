@@ -631,6 +631,7 @@ void dynamicArray<T>::resize(size_t newLen, const T& value)
             T* newArr = static_cast<T*>(::operator new(newCap * sizeof(T)));
 
             if constexpr (std::is_trivially_copyable_v<T>) {
+                std::memcpy(newArr, arr, len * sizeof(T)); // copy existing elements
                 fillTrivial(newArr + len, newLen - len, value);
             }
             else if constexpr (std::is_nothrow_move_constructible_v<T>)
