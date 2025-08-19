@@ -4,3 +4,4 @@ test
 test_dynamic_array
 test_dynamic_array.*
 .DS_Store
+.vscode/
