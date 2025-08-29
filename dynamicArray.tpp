@@ -331,10 +331,16 @@ dynamicArray<T>& dynamicArray<T>::operator=(dynamicArray<T>&& other) noexcept //
 }
 
 template<typename T>
-T& dynamicArray<T>::operator[](size_t idx) noexcept { return arr[idx]; } // no bounds checking for performance
+T& dynamicArray<T>::operator[](size_t idx) noexcept {
+    DYNARRAY_BOUNDS_CHECK(idx);
+    return arr[idx]; // no bounds checking for performance
+}
 
 template<typename T>
-const T& dynamicArray<T>::operator[](size_t idx) const noexcept { return arr[idx]; }
+const T& dynamicArray<T>::operator[](size_t idx) const noexcept {
+    DYNARRAY_BOUNDS_CHECK(idx);
+    return arr[idx]; 
+}
 
 template<typename T>
 T* dynamicArray<T>::begin() noexcept { return arr; }
@@ -391,6 +397,7 @@ void dynamicArray<T>::append(T&& item)
 template<typename T>
 void dynamicArray<T>::pop_back()
 {
+    DYNARRAY_EMPTY_CHECK();
     if constexpr (!std::is_trivially_destructible_v<T>)
     {
         if (len > 0) arr[--len].~T();
@@ -534,16 +541,28 @@ T& dynamicArray<T>::at(size_t idx)
 }
 
 template<typename T>
-T& dynamicArray<T>::front() noexcept { return arr[0]; }
+T& dynamicArray<T>::front() noexcept {
+    DYNARRAY_EMPTY_CHECK();
+    return arr[0];
+}
 
 template<typename T>
-const T& dynamicArray<T>::front() const noexcept { return arr[0]; }
+const T& dynamicArray<T>::front() const noexcept {
+    DYNARRAY_EMPTY_CHECK();
+    return arr[0];
+}
 
 template<typename T>
-T& dynamicArray<T>::back() noexcept { return arr[len - 1]; }
+T& dynamicArray<T>::back() noexcept {
+    DYNARRAY_EMPTY_CHECK();
+    return arr[len - 1];
+}
 
 template<typename T>
-const T& dynamicArray<T>::back() const noexcept { return arr[len - 1]; }
+const T& dynamicArray<T>::back() const noexcept {
+    DYNARRAY_EMPTY_CHECK();
+    return arr[len - 1];
+}
 
 template<typename T>
 bool dynamicArray<T>::empty() const noexcept

@@ -1,6 +1,28 @@
 #ifndef DYNAMIC_ARRAY_H
 #define DYNAMIC_ARRAY_H
 
+#ifdef DEBUG
+    #include <iostream>
+    #include <cassert>
+    #define DYNARRAY_ASSERT(condition, message) \
+        do { \
+            if (!(condition)) { \
+                std::cerr << "Assertion failed: " << (message) \
+                          << " at " << __FILE__ << ":" << __LINE__ \
+                          << " in " << __FUNCTION__ << std::endl; \
+                std::abort(); \
+            } \
+        } while(0)
+    #define DYNARRAY_BOUNDS_CHECK(idx) \
+        DYNARRAY_ASSERT(idx < len, "Index out of bounds")
+    #define DYNARRAY_EMPTY_CHECK() \
+        DYNARRAY_ASSERT(len > 0, "Operation on empty array")
+#else
+    #define DYNARRAY_ASSERT(condition, message) ((void)0)
+    #define DYNARRAY_BOUNDS_CHECK(idx) ((void)0)
+    #define DYNARRAY_EMPTY_CHECK() ((void)0)
+#endif
+
 #include <stddef.h> // size_t
 #include <iterator> // std::reverse_iterator
 
