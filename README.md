@@ -1,8 +1,14 @@
-# Dynamic Array class
+# PowerVector container
 
-Include in your `main.cpp` file using the following preprocessor directive:
+Clone the repo to try out the container:
+```bash
+git clone https://github.com/yourusername/PowerVector.git
+# Include path: -I/path/to/PowerVector/include
+```
+
+Simply include in your `main.cpp` using the preprocessor directive:
 ```cpp
-#include "dynamicArray.h"
+#include "PowerVector.h"
 ```
 
 Compile using C++17 or later:
