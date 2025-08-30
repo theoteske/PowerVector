@@ -71,6 +71,8 @@ public:
     XVector(const XVector<T>&);
     XVector(XVector<T>&&) noexcept;
     XVector(std::initializer_list<T> init);
+    template<typename InputIt>
+    XVector(InputIt first, InputIt last);
     ~XVector();
 
     // element access
@@ -350,6 +352,54 @@ XVector<T>::XVector(std::initializer_list<T> init)
         } catch (...) {
             if constexpr (!std::is_trivially_destructible_v<T>) {
                 for (size_t j = 0; j < i; ++j)
+                    data_[j].~T();
+            }
+            ::operator delete(data_);
+            throw;
+        }
+    }
+}
+
+template<typename T>
+template<typename InputIt>
+XVector<T>::XVector(InputIt first, InputIt last)
+    : size_(0), capacity_(1), data_(nullptr)
+{
+    // use iterator traits to determine if we can calculate size efficiently
+    using category = typename std::iterator_traits<InputIt>::iterator_category;
+    
+    if constexpr (std::is_base_of_v<std::random_access_iterator_tag, category>) {
+        // random access iterators can pre-calculate size
+        size_ = std::distance(first, last);
+        capacity_ = nextPowerOf2(size_);
+        data_ = static_cast<T*>(::operator new(capacity_ * sizeof(T)));
+        
+        size_t i = 0;
+        try {
+            for (; first != last; ++first, ++i) {
+                new (&data_[i]) T(*first);
+            }
+        } catch (...) {
+            if constexpr (!std::is_trivially_destructible_v<T>) {
+                for (size_t j = 0; j < i; ++j)
+                    data_[j].~T();
+            }
+            ::operator delete(data_);
+            throw;
+        }
+    } else {
+        // other iterators grow as we go
+        capacity_ = 1;
+        data_ = static_cast<T*>(::operator new(capacity_ * sizeof(T)));
+        
+        try {
+            for (; first != last; ++first) {
+                if (size_ >= capacity_) reallocate(true);
+                new (&data_[size_++]) T(*first);
+            }
+        } catch (...) {
+            if constexpr (!std::is_trivially_destructible_v<T>) {
+                for (size_t j = 0; j < size_; ++j)
                     data_[j].~T();
             }
             ::operator delete(data_);
