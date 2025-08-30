@@ -1,5 +1,5 @@
-#ifndef POWER_VECTOR_H
-#define POWER_VECTOR_H
+#ifndef X_VECTOR_H
+#define X_VECTOR_H
 
 #ifdef DEBUG
     #include <iostream>
@@ -35,7 +35,7 @@
 namespace pwr {
 
 template<typename T>
-class PowerVector
+class XVector
 {
     private:
         size_t size_;
@@ -59,15 +59,15 @@ class PowerVector
         using reverse_iterator = std::reverse_iterator<iterator>;
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-        PowerVector();
-        explicit PowerVector(size_t, const T& = T{});
+        XVector();
+        explicit XVector(size_t, const T& = T{});
         template<size_t N>
-        PowerVector(T (&a)[N]);
-        ~PowerVector();
-        PowerVector(const PowerVector<T>&);
-        PowerVector(PowerVector<T>&&) noexcept;
-        PowerVector<T>& operator=(const PowerVector<T>&);
-        PowerVector<T>& operator=(PowerVector<T>&&) noexcept;
+        XVector(T (&a)[N]);
+        ~XVector();
+        XVector(const XVector<T>&);
+        XVector(XVector<T>&&) noexcept;
+        XVector<T>& operator=(const XVector<T>&);
+        XVector<T>& operator=(XVector<T>&&) noexcept;
         T& operator[](size_t) noexcept;
         const T& operator[](size_t) const noexcept;
         T* begin() noexcept;
@@ -85,7 +85,7 @@ class PowerVector
         void append(const T&);
         void append(T&&);
         void pop_back();
-        void concatenate(const PowerVector<T>&);
+        void concatenate(const XVector<T>&);
         [[nodiscard]] T& at(size_t n);
         [[nodiscard]] const T& at(size_t n) const;
         T& front() noexcept;
@@ -94,7 +94,7 @@ class PowerVector
         const T& back() const noexcept;
         [[nodiscard]] bool empty() const noexcept;
         void clear() noexcept;
-        void swap(PowerVector<T>& other) noexcept;
+        void swap(XVector<T>& other) noexcept;
         void reserve(size_t);
         void resize(size_t, const T& = T{});
         void shrink_to_fit();
@@ -103,7 +103,7 @@ class PowerVector
 };
 
 template<typename T>
-size_t PowerVector<T>::nextPowerOf2(size_t n)
+size_t XVector<T>::nextPowerOf2(size_t n)
 {
     if (n <= 1) return 1;
     --n;
@@ -117,7 +117,7 @@ size_t PowerVector<T>::nextPowerOf2(size_t n)
 }
 
 template<typename T>
-void PowerVector<T>::fillTrivial(T* dest, size_t count, const T& value) {
+void XVector<T>::fillTrivial(T* dest, size_t count, const T& value) {
     if (count == 0) return;
 
     std::memcpy(dest, &value, sizeof(T));
@@ -131,7 +131,7 @@ void PowerVector<T>::fillTrivial(T* dest, size_t count, const T& value) {
 
 
 template<typename T>
-void PowerVector<T>::reallocate(bool doubleCap)
+void XVector<T>::reallocate(bool doubleCap)
 {
     const size_t newCap = doubleCap ? (capacity_ ? capacity_ * 2 : 1) : nextPowerOf2(size_); // for append could just be capacity_ *= 2, for concatenate need more
     T* newData = static_cast<T*>(::operator new(newCap * sizeof(T)));
@@ -180,11 +180,11 @@ void PowerVector<T>::reallocate(bool doubleCap)
 }
 
 template<typename T>
-PowerVector<T>::PowerVector() 
+XVector<T>::XVector() 
     : size_(0), capacity_(1), data_(static_cast<T*>(::operator new(sizeof(T)))) {}
 
 template<typename T>
-PowerVector<T>::PowerVector(size_t count, const T& value)
+XVector<T>::XVector(size_t count, const T& value)
     : size_(count), capacity_(nextPowerOf2(count)), data_(static_cast<T*>(::operator new(capacity_ * sizeof(T))))
 {
     if constexpr (std::is_trivially_copyable_v<T>)
@@ -220,7 +220,7 @@ PowerVector<T>::PowerVector(size_t count, const T& value)
 
 template<typename T>
 template<size_t N>
-PowerVector<T>::PowerVector(T (&a)[N])
+XVector<T>::XVector(T (&a)[N])
     : size_(N), capacity_(nextPowerOf2(N)), data_(static_cast<T*>(::operator new(capacity_ * sizeof(T))))
 {
     if constexpr (std::is_trivially_copyable_v<T>)
@@ -255,7 +255,7 @@ PowerVector<T>::PowerVector(T (&a)[N])
 }
 
 template<typename T>
-PowerVector<T>::~PowerVector()
+XVector<T>::~XVector()
 {
     if constexpr (!std::is_trivially_destructible_v<T>)
     {
@@ -267,7 +267,7 @@ PowerVector<T>::~PowerVector()
 }
 
 template<typename T>
-PowerVector<T>::PowerVector(const PowerVector<T>& other) // copy constructor
+XVector<T>::XVector(const XVector<T>& other) // copy constructor
     : size_(other.size_), capacity_(other.capacity_), data_(static_cast<T*>(::operator new(other.capacity_ * sizeof(T))))
 {
     if constexpr (std::is_trivially_copyable_v<T>)
@@ -302,7 +302,7 @@ PowerVector<T>::PowerVector(const PowerVector<T>& other) // copy constructor
 }
 
 template<typename T>
-PowerVector<T>::PowerVector(PowerVector<T>&& other) noexcept // move constructor
+XVector<T>::XVector(XVector<T>&& other) noexcept // move constructor
     : size_(other.size_), capacity_(other.capacity_), data_(std::exchange(other.data_, nullptr)) 
 {
     other.size_ = 0;
@@ -310,7 +310,7 @@ PowerVector<T>::PowerVector(PowerVector<T>&& other) noexcept // move constructor
 }
 
 template<typename T>
-PowerVector<T>& PowerVector<T>::operator=(const PowerVector<T>& other)
+XVector<T>& XVector<T>::operator=(const XVector<T>& other)
 {
     if (this != &other)
     {
@@ -403,7 +403,7 @@ PowerVector<T>& PowerVector<T>::operator=(const PowerVector<T>& other)
 }
 
 template<typename T>
-PowerVector<T>& PowerVector<T>::operator=(PowerVector<T>&& other) noexcept // move assignment operator
+XVector<T>& XVector<T>::operator=(XVector<T>&& other) noexcept // move assignment operator
 {
     if (this != &other)
     {
@@ -423,55 +423,55 @@ PowerVector<T>& PowerVector<T>::operator=(PowerVector<T>&& other) noexcept // mo
 }
 
 template<typename T>
-T& PowerVector<T>::operator[](size_t idx) noexcept {
+T& XVector<T>::operator[](size_t idx) noexcept {
     DYNARRAY_BOUNDS_CHECK(idx);
     return data_[idx]; // no bounds checking for performance
 }
 
 template<typename T>
-const T& PowerVector<T>::operator[](size_t idx) const noexcept {
+const T& XVector<T>::operator[](size_t idx) const noexcept {
     DYNARRAY_BOUNDS_CHECK(idx);
     return data_[idx]; 
 }
 
 template<typename T>
-T* PowerVector<T>::begin() noexcept { return data_; }
+T* XVector<T>::begin() noexcept { return data_; }
 
 template<typename T>
-const T* PowerVector<T>::begin() const noexcept { return data_; }
+const T* XVector<T>::begin() const noexcept { return data_; }
 
 template<typename T>
-T* PowerVector<T>::end() noexcept { return (data_ ? data_ + size_ : nullptr); }
+T* XVector<T>::end() noexcept { return (data_ ? data_ + size_ : nullptr); }
 
 template<typename T>
-const T* PowerVector<T>::end() const noexcept { return (data_ ? data_ + size_ : nullptr); }
+const T* XVector<T>::end() const noexcept { return (data_ ? data_ + size_ : nullptr); }
 
 template<typename T>
-std::reverse_iterator<T*> PowerVector<T>::rbegin() noexcept { return std::reverse_iterator<T*>(end()); }
+std::reverse_iterator<T*> XVector<T>::rbegin() noexcept { return std::reverse_iterator<T*>(end()); }
 
 template<typename T>
-std::reverse_iterator<const T*> PowerVector<T>::rbegin() const noexcept { return std::reverse_iterator<const T*>(end()); }
+std::reverse_iterator<const T*> XVector<T>::rbegin() const noexcept { return std::reverse_iterator<const T*>(end()); }
 
 template<typename T>
-std::reverse_iterator<T*> PowerVector<T>::rend() noexcept { return std::reverse_iterator<T*>(begin()); }
+std::reverse_iterator<T*> XVector<T>::rend() noexcept { return std::reverse_iterator<T*>(begin()); }
 
 template<typename T>
-std::reverse_iterator<const T*> PowerVector<T>::rend() const noexcept { return std::reverse_iterator<const T*>(begin()); }
+std::reverse_iterator<const T*> XVector<T>::rend() const noexcept { return std::reverse_iterator<const T*>(begin()); }
 
 template<typename T>
-size_t PowerVector<T>::size() const noexcept { return size_; }
+size_t XVector<T>::size() const noexcept { return size_; }
 
 template<typename T>
-size_t PowerVector<T>::capacity() const noexcept { return capacity_; }
+size_t XVector<T>::capacity() const noexcept { return capacity_; }
 
 template<typename T>
-T* PowerVector<T>::data() noexcept { return data_; }
+T* XVector<T>::data() noexcept { return data_; }
 
 template<typename T>
-const T* PowerVector<T>::data() const noexcept { return data_; }
+const T* XVector<T>::data() const noexcept { return data_; }
 
 template<typename T>
-void PowerVector<T>::append(const T& item)
+void XVector<T>::append(const T& item)
 {
     if (size_ >= capacity_) reallocate(true);
     new (&data_[size_]) T(item);
@@ -479,7 +479,7 @@ void PowerVector<T>::append(const T& item)
 }
 
 template<typename T>
-void PowerVector<T>::append(T&& item)
+void XVector<T>::append(T&& item)
 {
     if (size_ >= capacity_) reallocate(true);
     new (&data_[size_]) T(std::move(item));
@@ -487,7 +487,7 @@ void PowerVector<T>::append(T&& item)
 }
 
 template<typename T>
-void PowerVector<T>::pop_back()
+void XVector<T>::pop_back()
 {
     DYNARRAY_EMPTY_CHECK();
     if constexpr (!std::is_trivially_destructible_v<T>)
@@ -501,7 +501,7 @@ void PowerVector<T>::pop_back()
 }
 
 template<typename T>
-void PowerVector<T>::concatenate(const PowerVector<T>& other)
+void XVector<T>::concatenate(const XVector<T>& other)
 {
     if (other.empty()) return;
 
@@ -617,7 +617,7 @@ void PowerVector<T>::concatenate(const PowerVector<T>& other)
 }
 
 template<typename T>
-const T& PowerVector<T>::at(size_t idx) const
+const T& XVector<T>::at(size_t idx) const
 {
     if (idx >= size_) throw std::out_of_range("Data_ay index out of bounds.");
     
@@ -625,7 +625,7 @@ const T& PowerVector<T>::at(size_t idx) const
 }
 
 template<typename T>
-T& PowerVector<T>::at(size_t idx)
+T& XVector<T>::at(size_t idx)
 {
     if (idx >= size_) throw std::out_of_range("Data_ay index out of bounds.");
     
@@ -633,37 +633,37 @@ T& PowerVector<T>::at(size_t idx)
 }
 
 template<typename T>
-T& PowerVector<T>::front() noexcept {
+T& XVector<T>::front() noexcept {
     DYNARRAY_EMPTY_CHECK();
     return data_[0];
 }
 
 template<typename T>
-const T& PowerVector<T>::front() const noexcept {
+const T& XVector<T>::front() const noexcept {
     DYNARRAY_EMPTY_CHECK();
     return data_[0];
 }
 
 template<typename T>
-T& PowerVector<T>::back() noexcept {
+T& XVector<T>::back() noexcept {
     DYNARRAY_EMPTY_CHECK();
     return data_[size_ - 1];
 }
 
 template<typename T>
-const T& PowerVector<T>::back() const noexcept {
+const T& XVector<T>::back() const noexcept {
     DYNARRAY_EMPTY_CHECK();
     return data_[size_ - 1];
 }
 
 template<typename T>
-bool PowerVector<T>::empty() const noexcept
+bool XVector<T>::empty() const noexcept
 {
     return (size_ == 0);
 }
 
 template<typename T>
-void PowerVector<T>::clear() noexcept 
+void XVector<T>::clear() noexcept 
 {
     if constexpr (!std::is_trivially_destructible_v<T>)
     {
@@ -674,14 +674,14 @@ void PowerVector<T>::clear() noexcept
 }
 
 template<typename T>
-void PowerVector<T>::swap(PowerVector<T>& other) noexcept {
+void XVector<T>::swap(XVector<T>& other) noexcept {
     std::swap(data_, other.data_);
     std::swap(size_, other.size_);
     std::swap(capacity_, other.capacity_);
 }
 
 template<typename T>
-void PowerVector<T>::reserve(size_t space)
+void XVector<T>::reserve(size_t space)
 {
     if (space > capacity_)
     {
@@ -732,7 +732,7 @@ void PowerVector<T>::reserve(size_t space)
 }
 
 template<typename T>
-void PowerVector<T>::resize(size_t newSize, const T& value)
+void XVector<T>::resize(size_t newSize, const T& value)
 {
     if (newSize > size_)
     {
@@ -860,14 +860,14 @@ void PowerVector<T>::resize(size_t newSize, const T& value)
 }
 
 template <typename T>
-void PowerVector<T>::shrink_to_fit()
+void XVector<T>::shrink_to_fit()
 {
     if (nextPowerOf2(size_) < capacity_) reallocate(); // shrink if we can reduce capacity
 }
 
 template <typename T>
 template <typename... Args>
-void PowerVector<T>::emplace_back(Args&&... args)
+void XVector<T>::emplace_back(Args&&... args)
 {
     if (size_ >= capacity_) reallocate(true);
     new (&data_[size_]) T(std::forward<Args>(args)...);
@@ -876,4 +876,4 @@ void PowerVector<T>::emplace_back(Args&&... args)
 
 } // namespace pwr
 
-#endif // POWER_VECTOR_H
+#endif // X_VECTOR_H
