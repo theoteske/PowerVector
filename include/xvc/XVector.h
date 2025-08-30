@@ -32,7 +32,7 @@
 #include <cstring>     // std::memcpy, std::memmove
 #include <algorithm>   // std::min
 
-namespace pwr {
+namespace xvc {
 
 template<typename T>
 class XVector
@@ -874,6 +874,6 @@ void XVector<T>::emplace_back(Args&&... args)
     ++size_;
 }
 
-} // namespace pwr
+} // namespace xvc
 
 #endif // X_VECTOR_H

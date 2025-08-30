@@ -2,7 +2,7 @@
 
 Clone the repo to try out the container:
 ```bash
-git clone https://github.com/yourusername/XVector.git
+git clone https://github.com/theoteske/XVector.git
 # Include path: -I/path/to/XVector/include
 ```
 
