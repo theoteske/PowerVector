@@ -4,7 +4,7 @@
 #ifdef DEBUG
     #include <iostream>
     #include <cassert>
-    #define DYNARRAY_ASSERT(condition, message) \
+    #define XVECTOR_ASSERT(condition, message) \
         do { \
             if (!(condition)) { \
                 std::cerr << "Assertion failed: " << (message) \
@@ -13,14 +13,14 @@
                 std::abort(); \
             } \
         } while(0)
-    #define DYNARRAY_BOUNDS_CHECK(idx) \
-        DYNARRAY_ASSERT(idx < size_, "Index out of bounds")
-    #define DYNARRAY_EMPTY_CHECK() \
-        DYNARRAY_ASSERT(size_ > 0, "Operation on empty array")
+    #define XVECTOR_BOUNDS_CHECK(idx) \
+        XVECTOR_ASSERT(idx < size_, "Index out of bounds")
+    #define XVECTOR_EMPTY_CHECK() \
+        XVECTOR_ASSERT(size_ > 0, "Operation on empty array")
 #else
-    #define DYNARRAY_ASSERT(condition, message) ((void)0)
-    #define DYNARRAY_BOUNDS_CHECK(idx) ((void)0)
-    #define DYNARRAY_EMPTY_CHECK() ((void)0)
+    #define XVECTOR_ASSERT(condition, message) ((void)0)
+    #define XVECTOR_BOUNDS_CHECK(idx) ((void)0)
+    #define XVECTOR_EMPTY_CHECK() ((void)0)
 #endif
 
 #include <stddef.h>    // size_t
@@ -424,13 +424,13 @@ XVector<T>& XVector<T>::operator=(XVector<T>&& other) noexcept // move assignmen
 
 template<typename T>
 T& XVector<T>::operator[](size_t idx) noexcept {
-    DYNARRAY_BOUNDS_CHECK(idx);
+    XVECTOR_BOUNDS_CHECK(idx);
     return data_[idx]; // no bounds checking for performance
 }
 
 template<typename T>
 const T& XVector<T>::operator[](size_t idx) const noexcept {
-    DYNARRAY_BOUNDS_CHECK(idx);
+    XVECTOR_BOUNDS_CHECK(idx);
     return data_[idx]; 
 }
 
@@ -489,14 +489,14 @@ void XVector<T>::append(T&& item)
 template<typename T>
 void XVector<T>::pop_back()
 {
-    DYNARRAY_EMPTY_CHECK();
+    XVECTOR_EMPTY_CHECK();
     if constexpr (!std::is_trivially_destructible_v<T>)
     {
-        if (size_ > 0) data_[--size_].~T();
+        data_[--size_].~T(); // no check for performance
     }
     else
     {
-        if (size_ > 0) --size_;
+        --size_;
     }
 }
 
@@ -634,25 +634,25 @@ T& XVector<T>::at(size_t idx)
 
 template<typename T>
 T& XVector<T>::front() noexcept {
-    DYNARRAY_EMPTY_CHECK();
+    XVECTOR_EMPTY_CHECK();
     return data_[0];
 }
 
 template<typename T>
 const T& XVector<T>::front() const noexcept {
-    DYNARRAY_EMPTY_CHECK();
+    XVECTOR_EMPTY_CHECK();
     return data_[0];
 }
 
 template<typename T>
 T& XVector<T>::back() noexcept {
-    DYNARRAY_EMPTY_CHECK();
+    XVECTOR_EMPTY_CHECK();
     return data_[size_ - 1];
 }
 
 template<typename T>
 const T& XVector<T>::back() const noexcept {
-    DYNARRAY_EMPTY_CHECK();
+    XVECTOR_EMPTY_CHECK();
     return data_[size_ - 1];
 }
 
