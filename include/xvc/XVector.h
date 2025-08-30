@@ -29,7 +29,7 @@
 #include <utility>     // std::exchange, std::forward, std::swap
 #include <type_traits> // std::is_nothrow_move_constructible_v, std::is_nothrow_copy_constructible_v, std::is_trivially_destructible_v
 #include <new>         // ::operator new, ::operator delete
-#include <iterator>    // std::reverse_iterator, InputIt
+#include <iterator>    // std::reverse_iterator
 #include <cstring>     // std::memcpy, std::memmove, std::memcmp
 #include <algorithm>   // std::min
 
@@ -99,6 +99,7 @@ public:
 
     // capacity
     [[nodiscard]] size_t size() const noexcept;
+    [[nodiscard]] size_t max_size() const noexcept;
     [[nodiscard]] size_t capacity() const noexcept;
     [[nodiscard]] bool empty() const noexcept;
     
@@ -520,6 +521,9 @@ std::reverse_iterator<const T*> XVector<T>::rend() const noexcept { return std::
 
 template<typename T>
 size_t XVector<T>::size() const noexcept { return size_; }
+
+template<typename T>
+size_t XVector<T>::max_size() const noexcept { return std::numeric_limits<size_t>::max() / sizeof(T); }
 
 template<typename T>
 size_t XVector<T>::capacity() const noexcept { return capacity_; }
