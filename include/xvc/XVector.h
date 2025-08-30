@@ -37,69 +37,81 @@ namespace xvc {
 template<typename T>
 class XVector
 {
-    private:
-        size_t size_;
-        size_t capacity_;
-        T* data_;
+private:
+    // member variables
+    size_t size_;
+    size_t capacity_;
+    T* data_;
 
-        static size_t nextPowerOf2(size_t);
-        static void fillTrivial(T* dest, size_t count, const T& value);
-        void reallocate(bool = false);
-    public:
-        // type aliases for STL compatibility
-        using value_type = T;
-        using size_type = size_t;
-        using difference_type = ptrdiff_t;
-        using reference = T&;
-        using const_reference = const T&;
-        using pointer = T*;
-        using const_pointer = const T*;
-        using iterator = T*;
-        using const_iterator = const T*;
-        using reverse_iterator = std::reverse_iterator<iterator>;
-        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    // private methods
+    static size_t nextPowerOf2(size_t);
+    static void fillTrivial(T* dest, size_t count, const T& value);
+    void reallocate(bool = false);
 
-        XVector();
-        explicit XVector(size_t, const T& = T{});
-        template<size_t N>
-        XVector(T (&a)[N]);
-        ~XVector();
-        XVector(const XVector<T>&);
-        XVector(XVector<T>&&) noexcept;
-        XVector<T>& operator=(const XVector<T>&);
-        XVector<T>& operator=(XVector<T>&&) noexcept;
-        T& operator[](size_t) noexcept;
-        const T& operator[](size_t) const noexcept;
-        T* begin() noexcept;
-        const T* begin() const noexcept;
-        T* end() noexcept;
-        const T* end() const noexcept;
-        std::reverse_iterator<T*> rbegin() noexcept;
-        std::reverse_iterator<const T*> rbegin() const noexcept;
-        std::reverse_iterator<T*> rend() noexcept;
-        std::reverse_iterator<const T*> rend() const noexcept;
-        [[nodiscard]] size_t size() const noexcept;
-        [[nodiscard]] size_t capacity() const noexcept;
-        [[nodiscard]] T* data() noexcept;
-        [[nodiscard]] const T* data() const noexcept;
-        void append(const T&);
-        void append(T&&);
-        void pop_back();
-        void concatenate(const XVector<T>&);
-        [[nodiscard]] T& at(size_t n);
-        [[nodiscard]] const T& at(size_t n) const;
-        T& front() noexcept;
-        const T& front() const noexcept;
-        T& back() noexcept;
-        const T& back() const noexcept;
-        [[nodiscard]] bool empty() const noexcept;
-        void clear() noexcept;
-        void swap(XVector<T>& other) noexcept;
-        void reserve(size_t);
-        void resize(size_t, const T& = T{});
-        void shrink_to_fit();
-        template<typename... Args>
-        void emplace_back(Args&&...);
+public:
+    // type aliases for STL compatibility
+    using value_type = T;
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
+    using reference = T&;
+    using const_reference = const T&;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using iterator = T*;
+    using const_iterator = const T*;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+    // constructors and destructor
+    XVector();
+    explicit XVector(size_t, const T& = T{});
+    template<size_t N>
+    XVector(T (&a)[N]);
+    XVector(const XVector<T>&);
+    XVector(XVector<T>&&) noexcept;
+    ~XVector();
+
+    // element access
+    XVector<T>& operator=(const XVector<T>&);
+    XVector<T>& operator=(XVector<T>&&) noexcept;
+    T& operator[](size_t) noexcept;
+    const T& operator[](size_t) const noexcept;
+    [[nodiscard]] T& at(size_t n);
+    [[nodiscard]] const T& at(size_t n) const;
+    T& front() noexcept;
+    const T& front() const noexcept;
+    T& back() noexcept;
+    const T& back() const noexcept;
+    [[nodiscard]] T* data() noexcept;
+    [[nodiscard]] const T* data() const noexcept;
+
+    // iterators
+    T* begin() noexcept;
+    const T* begin() const noexcept;
+    T* end() noexcept;
+    const T* end() const noexcept;
+    std::reverse_iterator<T*> rbegin() noexcept;
+    std::reverse_iterator<const T*> rbegin() const noexcept;
+    std::reverse_iterator<T*> rend() noexcept;
+    std::reverse_iterator<const T*> rend() const noexcept;
+
+    // capacity
+    [[nodiscard]] size_t size() const noexcept;
+    [[nodiscard]] size_t capacity() const noexcept;
+    [[nodiscard]] bool empty() const noexcept;
+    
+    // modifiers
+    void append(const T&);
+    void append(T&&);
+    void pop_back();
+    void concatenate(const XVector<T>&);
+    void clear() noexcept;
+    void swap(XVector<T>& other) noexcept;
+    void reserve(size_t);
+    void resize(size_t, const T& = T{});
+    void shrink_to_fit();
+    template<typename... Args>
+    void emplace_back(Args&&...);
 };
 
 template<typename T>
@@ -122,7 +134,8 @@ void XVector<T>::fillTrivial(T* dest, size_t count, const T& value) {
 
     std::memcpy(dest, &value, sizeof(T));
     size_t filled = 1;
-    while (filled < count) {
+    while (filled < count)
+    {
         const size_t chunk = std::min(filled, count - filled);
         std::memcpy(dest + filled, dest, chunk * sizeof(T));
         filled += chunk;
@@ -267,7 +280,7 @@ XVector<T>::~XVector()
 }
 
 template<typename T>
-XVector<T>::XVector(const XVector<T>& other) // copy constructor
+XVector<T>::XVector(const XVector<T>& other)
     : size_(other.size_), capacity_(other.capacity_), data_(static_cast<T*>(::operator new(other.capacity_ * sizeof(T))))
 {
     if constexpr (std::is_trivially_copyable_v<T>)
@@ -302,7 +315,7 @@ XVector<T>::XVector(const XVector<T>& other) // copy constructor
 }
 
 template<typename T>
-XVector<T>::XVector(XVector<T>&& other) noexcept // move constructor
+XVector<T>::XVector(XVector<T>&& other) noexcept
     : size_(other.size_), capacity_(other.capacity_), data_(std::exchange(other.data_, nullptr)) 
 {
     other.size_ = 0;
@@ -403,7 +416,7 @@ XVector<T>& XVector<T>::operator=(const XVector<T>& other)
 }
 
 template<typename T>
-XVector<T>& XVector<T>::operator=(XVector<T>&& other) noexcept // move assignment operator
+XVector<T>& XVector<T>::operator=(XVector<T>&& other) noexcept
 {
     if (this != &other)
     {
