@@ -75,9 +75,11 @@ public:
     XVector(InputIt first, InputIt last);
     ~XVector();
 
-    // element access
+    //asignment operator
     XVector<T>& operator=(const XVector<T>&);
     XVector<T>& operator=(XVector<T>&&) noexcept;
+
+    // element access
     T& operator[](size_t) noexcept;
     const T& operator[](size_t) const noexcept;
     [[nodiscard]] T& at(size_t n);
@@ -108,6 +110,8 @@ public:
     // modifiers
     void append(const T&);
     void append(T&&);
+    void push_back(const T&);
+    void push_back(T&&);
     void pop_back();
     void concatenate(const XVector<T>&);
     void clear() noexcept;
@@ -599,6 +603,12 @@ void XVector<T>::append(T&& item)
     new (&data_[size_]) T(std::move(item));
     ++size_;
 }
+
+template<typename T>
+void XVector<T>::push_back(const T& item) { append(item); }
+
+template<typename T>
+void XVector<T>::push_back(T&& item) { append(std::move(item)); }
 
 template<typename T>
 void XVector<T>::pop_back()
