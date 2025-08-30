@@ -24,6 +24,7 @@
 #endif
 
 #include <stddef.h>    // size_t
+#include <initializer_list> // std::initializer_list
 #include <stdexcept>   // std::out_of_range
 #include <utility>     // std::exchange, std::forward, std::swap
 #include <type_traits> // std::is_nothrow_move_constructible_v, std::is_nothrow_copy_constructible_v, std::is_trivially_destructible_v
@@ -69,6 +70,7 @@ public:
     XVector(T (&a)[N]);
     XVector(const XVector<T>&);
     XVector(XVector<T>&&) noexcept;
+    XVector(std::initializer_list<T> init);
     ~XVector();
 
     // element access
@@ -268,18 +270,6 @@ XVector<T>::XVector(T (&a)[N])
 }
 
 template<typename T>
-XVector<T>::~XVector()
-{
-    if constexpr (!std::is_trivially_destructible_v<T>)
-    {
-        for (size_t i = 0; i < size_; i++)
-            data_[i].~T();
-    }
-    
-    ::operator delete(data_);
-}
-
-template<typename T>
 XVector<T>::XVector(const XVector<T>& other)
     : size_(other.size_), capacity_(other.capacity_), data_(static_cast<T*>(::operator new(other.capacity_ * sizeof(T))))
 {
@@ -320,6 +310,42 @@ XVector<T>::XVector(XVector<T>&& other) noexcept
 {
     other.size_ = 0;
     other.capacity_ = 0;
+}
+
+template<typename T>
+XVector<T>::XVector(std::initializer_list<T> init)
+    : size_(init.size()), capacity_(nextPowerOf2(init.size())), 
+      data_(static_cast<T*>(::operator new(capacity_ * sizeof(T))))
+{
+    if constexpr (std::is_trivially_copyable_v<T>) {
+        std::memcpy(data_, init.begin(), size_ * sizeof(T));
+    } else {
+        size_t i = 0;
+        try {
+            for (const auto& val : init) {
+                new (&data_[i++]) T(val);
+            }
+        } catch (...) {
+            if constexpr (!std::is_trivially_destructible_v<T>) {
+                for (size_t j = 0; j < i; ++j)
+                    data_[j].~T();
+            }
+            ::operator delete(data_);
+            throw;
+        }
+    }
+}
+
+template<typename T>
+XVector<T>::~XVector()
+{
+    if constexpr (!std::is_trivially_destructible_v<T>)
+    {
+        for (size_t i = 0; i < size_; i++)
+            data_[i].~T();
+    }
+    
+    ::operator delete(data_);
 }
 
 template<typename T>
@@ -632,7 +658,7 @@ void XVector<T>::concatenate(const XVector<T>& other)
 template<typename T>
 const T& XVector<T>::at(size_t idx) const
 {
-    if (idx >= size_) throw std::out_of_range("Data_ay index out of bounds.");
+    if (idx >= size_) throw std::out_of_range("XVector index out of bounds.");
     
     return data_[idx];
 }
@@ -640,7 +666,7 @@ const T& XVector<T>::at(size_t idx) const
 template<typename T>
 T& XVector<T>::at(size_t idx)
 {
-    if (idx >= size_) throw std::out_of_range("Data_ay index out of bounds.");
+    if (idx >= size_) throw std::out_of_range("XVector index out of bounds.");
     
     return data_[idx];
 }
