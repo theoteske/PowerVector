@@ -29,8 +29,8 @@
 #include <utility>     // std::exchange, std::forward, std::swap
 #include <type_traits> // std::is_nothrow_move_constructible_v, std::is_nothrow_copy_constructible_v, std::is_trivially_destructible_v
 #include <new>         // ::operator new, ::operator delete
-#include <iterator>    // std::reverse_iterator
-#include <cstring>     // std::memcpy, std::memmove
+#include <iterator>    // std::reverse_iterator, InputIt
+#include <cstring>     // std::memcpy, std::memmove, std::memcmp
 #include <algorithm>   // std::min
 
 namespace xvc {
@@ -114,6 +114,27 @@ public:
     void shrink_to_fit();
     template<typename... Args>
     void emplace_back(Args&&...);
+
+    friend bool operator==(const XVector<T>& left, const XVector<T>& right) {
+        if (left.size_ != right.size_) return false;
+        
+        if constexpr (std::has_unique_object_representations_v<T>)
+        {
+            return std::memcmp(left.data_, right.data_, left.size_ * sizeof(T)) == 0;
+        }
+        else
+        {
+            for (size_t i = 0; i < left.size_; ++i)
+            {
+                if (!(left.data_[i] == right.data_[i])) return false;
+            }
+            return true;
+        }
+    }
+
+    friend bool operator!=(const XVector<T>& left, const XVector<T>& right) {
+        return !(left == right);
+    }
 };
 
 template<typename T>
